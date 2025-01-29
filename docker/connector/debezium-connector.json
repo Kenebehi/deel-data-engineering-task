@@ -1,0 +1,25 @@
+{
+    "name": "acme-pg-connector",
+    "config": {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "database.hostname": "transactions-db",
+      "database.port": "5432",
+      "database.user": "cdc_user",
+      "database.password": "cdc_1234",
+      "database.dbname": "finance_db",
+      "database.server.name": "acme_delivery",
+      "plugin.name": "pgoutput",
+      "publication.name": "cdc_publication",
+      "slot.name": "cdc_pgoutput",
+      "table.include.list": "operations.customers,operations.products,operations.orders,operations.order_items",
+      "tombstones.on.delete": "true",
+      "transforms": "unwrap",
+      "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+      "transforms.unwrap.drop.tombstones": "false",
+      "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "topic.creation.default.replication.factor": "1",
+      "topic.creation.default.partitions": "6",
+      "topic.prefix": "debezium"
+    }
+  }
