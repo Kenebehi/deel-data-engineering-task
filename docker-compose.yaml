@@ -34,7 +34,7 @@ services:
   schema-registry:
     image: confluentinc/cp-schema-registry:7.4.0
     depends_on: [kafka]
-    ports: ["8081:8081"]
+    ports: ["8082:8082"]
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
@@ -52,6 +52,57 @@ services:
       CONNECT_KEY_CONVERTER: io.confluent.connect.avro.SchemaRegistryConverter
       CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.SchemaRegistryConverter
       CONNECT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+
+  jobmanager:
+    container_name: jobmanager
+    build:
+      context: ./docker/flink/
+    ports:
+      - "8081:8081"
+      - "9249:9249"
+    command: jobmanager
+    volumes:
+      - ./src:/opt/flink/src
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+
+  taskmanager:
+    container_name: taskmanager
+    build:
+      context: ./docker/flink/
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    ports:
+      - "9250:9249"
+    volumes:
+      - ./src:/opt/flink/src
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2        
+
+  prometheus:
+    image: prom/prometheus:v2.37.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+
+  grafana:
+    image: grafana/grafana:8.4.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=flink
+    volumes:
+      - ./configs/grafana/provisioning/:/etc/grafana/provisioning/
 
 volumes:
   postgres-data:
